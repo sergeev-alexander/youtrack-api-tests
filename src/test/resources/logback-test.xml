@@ -1,0 +1,36 @@
+<configuration>
+
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="REST_ASSURED_FILE" class="ch.qos.logback.core.FileAppender">
+        <file>build/logs/rest-assured.log</file>
+        <encoder>
+            <pattern>%d{HH:mm:ss} [%thread] - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="APP_FILE" class="ch.qos.logback.core.FileAppender">
+        <file>build/logs/app.log</file>
+        <encoder>
+            <pattern>%d{HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <logger name="io.restassured" level="DEBUG" additivity="false">
+        <appender-ref ref="REST_ASSURED_FILE" />
+    </logger>
+
+    <logger name="alexander.sergeev.qa" level="DEBUG" additivity="false">
+        <appender-ref ref="CONSOLE" />
+        <appender-ref ref="APP_FILE" />
+    </logger>
+
+    <root level="WARN">
+        <appender-ref ref="CONSOLE" />
+    </root>
+
+</configuration>

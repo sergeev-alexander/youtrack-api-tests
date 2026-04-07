@@ -1,0 +1,3 @@
+testCaseId,summary,useProject,expectedStatus,expectedError
+TC_NEG_001,,true,400,invalid_properties
+TC_NEG_002,test,false,400,Issue.project-is-required

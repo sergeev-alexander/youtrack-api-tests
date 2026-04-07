@@ -1,0 +1,26 @@
+services:
+  youtrack:
+    image: jetbrains/youtrack:2026.1.12135
+    container_name: youtrack-server
+    ports:
+      - "${HOST_PORT}:8080"
+    volumes:
+      - yt-data:/opt/youtrack/data
+      - yt-conf:/opt/youtrack/conf
+      - yt-logs:/opt/youtrack/logs
+      - yt-backups:/opt/youtrack/backups
+    environment:
+      - YOUTRACK_JAVA_OPTS=${YOUTRACK_JAVA_OPTS}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/config"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+
+volumes:
+  yt-data:
+  yt-conf:
+  yt-logs:
+  yt-backups:

@@ -1,0 +1,2 @@
+testCaseId,shortName,expectedStatus,expectedError
+TC_NEG_003,TST,400,Bad Request
