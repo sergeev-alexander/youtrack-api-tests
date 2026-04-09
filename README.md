@@ -43,14 +43,7 @@ export YOUTRACK_AUTH_TOKEN="permanent_token"
 ### 5. Run tests
 
 ```bash
-# All tests
 ./gradlew clean test
-
-# Positive tests
-./gradlew clean test -Dgroups=positive
-
-# Negative tests
-./gradlew clean test -Dgroups=negative
 ```
 
 ## Report 

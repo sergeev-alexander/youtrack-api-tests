@@ -3,15 +3,8 @@
 <suite name="YouTrack API Suite" parallel="classes" thread-count="3">
 
     <test name="YouTrack Execution">
-        <groups>
-            <dependencies>
-                <group name="positive" depends-on="auth"/>
-                <group name="negative" depends-on="auth"/>
-            </dependencies>
-        </groups>
-
         <packages>
-            <package name="alexander.sergeev.qa.tests.*"/>
+            <package name="alexander.sergeev.qa.tests"/>
         </packages>
     </test>
 

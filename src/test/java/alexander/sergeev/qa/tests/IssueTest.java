@@ -1,29 +1,29 @@
-package alexander.sergeev.qa.tests.api;
+package alexander.sergeev.qa.tests;
 
 import alexander.sergeev.qa.model.EntityRef;
-import alexander.sergeev.qa.model.request.CreateCommentRequest;
 import alexander.sergeev.qa.model.request.CreateIssueRequest;
 import alexander.sergeev.qa.model.request.CreateProjectRequest;
 import alexander.sergeev.qa.model.request.UpdateIssueRequest;
-import alexander.sergeev.qa.model.response.CommentRecord;
 import alexander.sergeev.qa.model.response.IssueRecord;
 import alexander.sergeev.qa.model.response.ProjectRecord;
-import alexander.sergeev.qa.tests.base.BaseTest;
+import alexander.sergeev.qa.util.CsvDataProvider;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.util.UUID;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
 
-@Test(groups = "positive")
-public class PositiveApiTest extends BaseTest {
+@Test(dependsOnGroups = "auth")
+public class IssueTest extends BaseTest {
 
     private String projectId;
     private String issueId;
@@ -40,7 +40,7 @@ public class PositiveApiTest extends BaseTest {
         ProjectRecord project = given(spec)
                 .body(new CreateProjectRequest(
                         "test_" + UUID.randomUUID(),
-                        "TP" + UUID.randomUUID().toString().substring(0, 3).toUpperCase(),
+                        "IT" + UUID.randomUUID().toString().substring(0, 3).toUpperCase(),
                         new EntityRef(leaderId)))
                 .when()
                 .post(PROJECTS_PATH + PROJECT_FIELDS_QUERY)
@@ -79,56 +79,13 @@ public class PositiveApiTest extends BaseTest {
         }
     }
 
-    @Test(description = "Создание проекта с валидными данными (200)",
-            priority = 1,
-            groups = {"positive", "project-tests"})
-    public void createProject() {
-        String leaderId = given(spec)
-                .when()
-                .get(USERS_ME_PATH + "?fields=id")
-                .then()
-                .statusCode(200)
-                .extract().path("id");
-
-        String name = "test_" + UUID.randomUUID();
-
-        ProjectRecord project = given(spec)
-                .body(new CreateProjectRequest(
-                        name,
-                        "CP" + UUID.randomUUID().toString().substring(0, 3).toUpperCase(),
-                        new EntityRef(leaderId)))
-                .when()
-                .post(PROJECTS_PATH + PROJECT_FIELDS_QUERY)
-                .then()
-                .statusCode(200)
-                .extract().as(ProjectRecord.class);
-
-        assertThat(project.id(), notNullValue());
-        assertThat(project.name(), equalTo(name));
-        assertThat(project.type(), equalTo("Project"));
-
-        given(spec).when().delete(PROJECTS_PATH + "/" + project.id()).then().statusCode(200);
-    }
-
-    @Test(description = "Получение проекта по ID (200)",
-            priority = 2,
-            groups = {"positive", "project-tests"})
-    public void getProjectById() {
-        ProjectRecord project = given(spec)
-                .when()
-                .get(PROJECTS_PATH + "/" + projectId + PROJECT_FIELDS_QUERY)
-                .then()
-                .statusCode(200)
-                .extract().as(ProjectRecord.class);
-
-        assertThat(project.id(), equalTo(projectId));
-        assertThat(project.name(), notNullValue());
-        assertThat(project.type(), equalTo("Project"));
+    @DataProvider(name = "invalidIssues")
+    public Object[][] invalidIssues() {
+        return CsvDataProvider.load("data/issues_negative.csv");
     }
 
     @Test(description = "Создание задачи с валидными данными (200)",
-            priority = 3,
-            groups = {"positive", "issue-tests"})
+            priority = 3)
     public void createIssue() {
         String summary = "test_" + UUID.randomUUID();
 
@@ -151,7 +108,7 @@ public class PositiveApiTest extends BaseTest {
 
     @Test(description = "Получение задачи по ID (200)",
             priority = 4,
-            groups = {"positive", "issue-tests"})
+            groups = "issue-tests")
     public void getIssueById() {
         IssueRecord issue = given(spec)
                 .when()
@@ -167,7 +124,7 @@ public class PositiveApiTest extends BaseTest {
 
     @Test(description = "Обновление summary задачи (200)",
             priority = 5,
-            groups = {"positive", "issue-tests"})
+            groups = "issue-tests")
     public void updateIssue() {
         String newSummary = "test_updated_" + UUID.randomUUID();
 
@@ -183,22 +140,28 @@ public class PositiveApiTest extends BaseTest {
         assertThat(updated.summary(), equalTo(newSummary));
     }
 
-    @Test(description = "Добавление комментария к задаче (200)",
-            priority = 6,
-            groups = {"positive", "issue-tests"})
-    public void addComment() {
-        String text = "test_comment_" + UUID.randomUUID();
+    @Test(description = "Создание задачи без обязательных полей (400)",
+            dataProvider = "invalidIssues")
+    public void createIssueWithInvalidData(String testCaseId, String summary, String useProject, String expectedStatus, String expectedError) {
+        EntityRef project = Boolean.parseBoolean(useProject) ? new EntityRef(projectId) : null;
+        String issueSummary = summary.isBlank() ? null : summary;
 
-        CommentRecord comment = given(spec)
-                .body(new CreateCommentRequest(text))
+        given(spec)
+                .body(new CreateIssueRequest(issueSummary, null, project))
                 .when()
-                .post(ISSUES_PATH + "/" + issueId + "/comments" + COMMENT_FIELDS_QUERY)
+                .post(ISSUES_PATH + "?fields=id")
                 .then()
-                .statusCode(200)
-                .extract().as(CommentRecord.class);
+                .statusCode(Integer.parseInt(expectedStatus))
+                .body("error", containsString(expectedError));
+    }
 
-        assertThat(comment.id(), notNullValue());
-        assertThat(comment.text(), equalTo(text));
-        assertThat(comment.type(), equalTo("IssueComment"));
+    @Test(description = "Запрос несуществующей задачи (404)")
+    public void getIssueWithNonExistentId() {
+        given(spec)
+                .when()
+                .get(ISSUES_PATH + "/3-99999?fields=id")
+                .then()
+                .statusCode(404)
+                .body("error", equalTo("Not Found"));
     }
 }
