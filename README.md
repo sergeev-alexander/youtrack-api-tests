@@ -1,5 +1,10 @@
 # YouTrack API Test Framework
 
+> This project is a test assignment for ITK Academy. It implements automated testing for YouTrack API endpoints using 
+> RestAssured. 
+> The framework tests issue management (creation, update, deletion), project management, 
+> user management and comment functionality through comprehensive integration tests.
+
 ## Stack
 
 - Java 24
